@@ -35,29 +35,22 @@ def create_dst_matrix(nodes):
         dst_matrix.append([])
         for j in range(len(nodes)):
             dst_matrix[i].append([count_dist(nodes[i],nodes[j]),j])
-        #closest 
+        #nearest 
         dst_matrix[i].sort()
     return dst_matrix
 
 def min_index_value(indexes , node_neighbors):
     index = 0
-    while index in indexes:
+    while node_neighbors[index][1] in indexes:
         index +=1
-    for i in range(len(node_neighbors)):
-        if i not in indexes:
-            if node_neighbors[i][0] <= node_neighbors[index][0]:
-                index=i
     return node_neighbors[index][1] , node_neighbors[index]
 
-
-
-    
 def nearest_neighbour(dst_matrix):
     # start from first node
     
     length =  len(dst_matrix[0])
     size_of_cycle = length//2
-    first_cycle = [0]#[random.randint(0, length-1)]
+    first_cycle = [random.randint(0, length-1)]
   
     while len(first_cycle) < size_of_cycle:
         
@@ -93,11 +86,80 @@ def nearest_neighbour(dst_matrix):
 
     return [first_cycle , second_cycle]
 
+def best_new(cycle,first,second,first_neighbours,second_neighbours):
+    new = 0
+    while new in cycle:
+        new+=1
+    new_dst = first_neighbours[-1][0]+second_neighbours[-1][0]
+    for i in range(len(first_neighbours)):
+        if first_neighbours[i][1] not in cycle:
+            for j in range(len(first_neighbours)):
+                if second_neighbours[j][1] not in cycle and first_neighbours[i][1] + second_neighbours[j][1]<new_dst:
+                    if first_neighbours[i][1] == second_neighbours[j][1]:
+                        new = first_neighbours[i][1]
+                        new_dst = first_neighbours[i][1] + second_neighbours[j][1]
+                    else:
+                        break
+                
+    return [new, new_dst]  
+def lowest_cost(nearest,cycle_dst):
+    # print(nearest)
+    # print(cycle_dst)
+    # print()
+    cost = nearest[0][1] - cycle_dst[0]
+
+    index=0
+    for i in range(len(nearest)):
+        if cost > nearest[i][1] - cycle_dst[i]:
+            index = i
+            cost = nearest[i][1] - cycle_dst[i]
+    return index
+
 def cycle_expansion(dst_matrix):
-    pass
+    length =  len(dst_matrix[0])
+    size_of_cycle = length//2
+    first_cycle = [0]#[random.randint(0, length-1)]
+    first_cycle_dst =[]
+    # first node is the nearest one
+    first_index, first_index_value = min_index_value(first_cycle,dst_matrix[first_cycle[0]])
+    first_cycle.append(first_index)
+    first_cycle_dst.append(first_index_value[0])
+
+    while len(first_cycle) < size_of_cycle:
+        nearest = []
+        for i in range(len(first_cycle)-1):
+            nearest.append(best_new(first_cycle,first_cycle[i],first_cycle[i+1],dst_matrix[first_cycle[i]],dst_matrix[first_cycle[i+1]]))
+        #find lowest cost
+        index = lowest_cost(nearest,first_cycle_dst)
+
+        first_cycle.insert(index,nearest[index][0])
+        first_cycle_dst.insert(index,nearest[index][1])
+    second_cycle = [0]
+
+    # looking for first node outside of first cycle
+    while second_cycle[0] in first_cycle:
+        second_cycle[0]+=1
+    size_of_second_cycle = length - size_of_cycle
+    second_cycle_dst =[]
+    # second node is the nearest one
+    second_index, second_index_value = min_index_value(second_cycle,dst_matrix[second_cycle[0]])
+    second_cycle.append(second_index)
+    second_cycle_dst.append(second_index_value[0])
+    while len(second_cycle) < size_of_second_cycle:
+        nearest = []
+        for i in range(len(second_cycle)-1):
+            nearest.append(best_new(first_cycle+second_cycle,second_cycle[i],second_cycle[i+1],dst_matrix[second_cycle[i]],dst_matrix[second_cycle[i+1]]))
+        #find lowest cost
+        index = lowest_cost(nearest,second_cycle_dst)
+
+        second_cycle.insert(index,nearest[index][0])
+        second_cycle_dst.insert(index,nearest[index][1])
+
+    return [first_cycle, second_cycle]
 
 def cycle_expansion_regret(dst_matrix):
     pass
+
 def draw_lines(nodes,indexes):
     x_cords =[]
     y_cords=[]
@@ -119,4 +181,5 @@ def display(nodes, indexes):
 nodes = readTSP("kroA100.tsp")
 dst_matrix = create_dst_matrix(nodes)
 # indexes = nearest_neighbour(dst_matrix)
-# display(nodes, indexes)
+indexes = cycle_expansion(dst_matrix)
+display(nodes, indexes)
