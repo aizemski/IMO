@@ -34,8 +34,9 @@ def create_dst_matrix(nodes):
     for i in range(len(nodes)):
         dst_matrix.append([])
         for j in range(len(nodes)):
-            dst_matrix[i].append(count_dist(nodes[i],nodes[j]))
-        
+            dst_matrix[i].append([count_dist(nodes[i],nodes[j]),j])
+        #closest 
+        dst_matrix[i].sort()
     return dst_matrix
 
 def min_index_value(indexes , node_neighbors):
@@ -44,10 +45,10 @@ def min_index_value(indexes , node_neighbors):
         index +=1
     for i in range(len(node_neighbors)):
         if i not in indexes:
-            if node_neighbors[i] <= node_neighbors[index]:
+            if node_neighbors[i][0] <= node_neighbors[index][0]:
                 index=i
+    return node_neighbors[index][1] , node_neighbors[index]
 
-    return index , node_neighbors[index]
 
 
     
@@ -56,7 +57,7 @@ def nearest_neighbour(dst_matrix):
     
     length =  len(dst_matrix[0])
     size_of_cycle = length//2
-    first_cycle =[random.randint(0, length-1)]
+    first_cycle = [0]#[random.randint(0, length-1)]
   
     while len(first_cycle) < size_of_cycle:
         
@@ -117,5 +118,5 @@ def display(nodes, indexes):
     # pass
 nodes = readTSP("kroA100.tsp")
 dst_matrix = create_dst_matrix(nodes)
-indexes = nearest_neighbour(dst_matrix)
-display(nodes, indexes)
+# indexes = nearest_neighbour(dst_matrix)
+# display(nodes, indexes)
