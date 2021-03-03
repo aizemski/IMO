@@ -44,27 +44,28 @@ def min_index_value(indexes , node_neighbors):
     while node_neighbors[index][1] in indexes:
         index +=1
     return node_neighbors[index][1] , node_neighbors[index]
+def nearest_neighbour_execute(cycle,size_of_cycle,dst_matrix,second_cycle):
+    while len(cycle) < size_of_cycle:
+    
+        # check on which end is closer node
+        index, index_value = min_index_value(cycle+second_cycle,dst_matrix[cycle[0]])
+        last_index, last_index_value =  min_index_value(cycle+second_cycle,dst_matrix[cycle[-1]])
+        
+        # add node at beginnig
+        if index_value > last_index_value:
+            cycle.insert(0,index)
+        # add node at end
+        else:
+            cycle.append(last_index)
+    return cycle
 
 def nearest_neighbour(dst_matrix):
     # start from first node
     
     length =  len(dst_matrix[0])
     size_of_cycle = length//2
-    first_cycle = [random.randint(0, length-1)]
-  
-    while len(first_cycle) < size_of_cycle:
-        
-        # check on which end is closer node
-        first_index, first_index_value = min_index_value(first_cycle,dst_matrix[first_cycle[0]])
-        last_index, last_index_value =  min_index_value(first_cycle,dst_matrix[first_cycle[-1]])
-        
-        # add node at beginnig
-        if first_index_value > last_index_value:
-            first_cycle.insert(0,first_index)
-        # add node at end
-        else:
-            first_cycle.append(last_index)
-    
+    first_cycle = [0]#[random.randint(0, length-1)]
+    first_cycle = nearest_neighbour_execute(first_cycle,size_of_cycle,dst_matrix,[])
     second_cycle = [0]
 
     # looking for first node outside of first cycle
@@ -72,17 +73,7 @@ def nearest_neighbour(dst_matrix):
         second_cycle[0]+=1
     size_of_second_cycle = length - size_of_cycle
     
-    while len(second_cycle) < size_of_second_cycle:
-        # check on which end is closer node
-        first_index, first_index_value = min_index_value(first_cycle+second_cycle,dst_matrix[second_cycle[0]])
-        last_index, last_index_value =  min_index_value(first_cycle+second_cycle,dst_matrix[second_cycle[-1]])
-        
-        # add node at beginnig
-        if first_index_value > last_index_value:
-            second_cycle.insert(0,first_index)
-        # add node at end
-        else:
-            second_cycle.append(last_index)
+    second_cycle = nearest_neighbour_execute(second_cycle,size_of_second_cycle,dst_matrix,first_cycle)
 
     return [first_cycle , second_cycle]
 
@@ -157,7 +148,10 @@ def cycle_expansion(dst_matrix):
 
     return [first_cycle, second_cycle]
 
-def cycle_expansion_regret(dst_matrix):
+def regret_2():
+    pass
+
+def cycle_expansion_regret_2(dst_matrix):
     pass
 
 def draw_lines(nodes,indexes):
@@ -180,6 +174,6 @@ def display(nodes, indexes):
     # pass
 nodes = readTSP("kroA100.tsp")
 dst_matrix = create_dst_matrix(nodes)
-# indexes = nearest_neighbour(dst_matrix)
-indexes = cycle_expansion(dst_matrix)
+indexes = nearest_neighbour(dst_matrix)
+# indexes = cycle_expansion(dst_matrix)
 display(nodes, indexes)
