@@ -56,7 +56,6 @@ class TSP:
 
     def nearest_neighbour_execute(self,cycle,size_of_cycle,second_cycle):
         if len(cycle) < size_of_cycle:
-        
             # check on which end is closer node
             index_list =[]
             index_value_list=[]
@@ -65,7 +64,6 @@ class TSP:
                 index_list.append(index)
                 index_value_list.append(index_value)
             min_val = min(index_value_list)
-            
             for i in range(len(index_value_list)):
                 if index_value_list[i] == min_val:
                     cycle.insert(i+1,index_list[i])  
@@ -76,17 +74,13 @@ class TSP:
         # start from first node
         length =  len(dst_matrix[0])
         size_of_cycle = length//2
-        first_cycle = [0]#[random.randint(0, length-1)]
+        first_cycle = [random.randint(0, length-1)]
         # farest node to first_cycle first node
         second_cycle = [self.dst_matrix_sorted[first_cycle[0]][-1][1]] 
-        return [first_cycle , second_cycle]
-        first_cycle = self.nearest_neighbour_execute(first_cycle,size_of_cycle,[])
-        # looking for first node outside of first cycle
-        while second_cycle[0] in first_cycle:
-            second_cycle[0]+=1
-        size_of_second_cycle = length - size_of_cycle
-        second_cycle = self.nearest_neighbour_execute(second_cycle,size_of_second_cycle,dst_matrix,first_cycle)
-
+      
+        while len(second_cycle)+len(first_cycle)<length:
+            first_cycle = self.nearest_neighbour_execute(first_cycle,size_of_cycle,second_cycle)
+            second_cycle = self.nearest_neighbour_execute(second_cycle,length-size_of_cycle,first_cycle)     
         return [first_cycle , second_cycle]
 
     def best_new(self,cycle,first,second,first_neighbours,second_neighbours):
@@ -119,7 +113,7 @@ class TSP:
         # print(cycle)
         for i in range(-1,len(cycle)-1):
 
-            new_dst.append(dst_matrix[cycle[i]][0][cycle[i+1]][0])
+            new_dst.append(self.dst_matrix[cycle[i]][0][cycle[i+1]][0])
         return new_dst
 
     def cycle_expansion_execute(self,cycle,cycle_dst,size_of_cycle,dst_matrix,second_cycle):
@@ -194,7 +188,9 @@ class TSP:
 
 
 solver = TSP(KROA100_FILENAME)
-print(solver.nearest_neighbour(solver.dst_matrix_sorted))
+indexes = solver.nearest_neighbour(solver.dst_matrix_sorted)
+print(sum(solver.count_new_dist(indexes[0])),sum(solver.count_new_dist(indexes[1])))
+solver.display(indexes)
 # solver.display(indexes)
 # for i in range(1):
 #     indexes = nearest_neighbour(dst_matrix_sorted)
