@@ -97,7 +97,7 @@ class TSP:
 
     def best_new(self,cycle,first,second,first_neighbours,second_neighbours,cluster):
         new = 0
-        while new in cycle:
+        while new in cycle or new not in cluster:
             new+=1
         new_dst = first_neighbours[-1][0]+second_neighbours[-1][0]
         for i in range(len(first_neighbours)):
@@ -133,8 +133,7 @@ class TSP:
             cycle_dst = self.count_new_dist(cycle)
             for i in range(-1,len(cycle)-1):
                 nearest.append(self.best_new(cycle,cycle[i],cycle[i+1],self.dst_matrix_sorted[cycle[i]],self.dst_matrix_sorted[cycle[i+1]],cluster))
-            #find lowest cost
-            # print(nearest,cycle_dst)
+
             index = self.lowest_cost(nearest,cycle_dst)
             cycle.insert(index,nearest[index][0])
             
@@ -160,13 +159,76 @@ class TSP:
         second_cycle = self.cycle_expansion_execute(second_cycle,cluster2)
         # self.save_fig([first_cycle, second_cycle])
         return [first_cycle, second_cycle]
+    
+    def find_second(self,candidats,cycle,cluster,cycle_dst,nearest):
+        print('xd')
+        candidat_regret = []
+        for i in range(len(candidats)):
+            tmp_regret = []
+            for j in range(-1,len(cycle)-1):
+                old_edge = self.dst_matrix[cycle[j]][0][cycle[j+1]][0]
+                new_edge_1 =self.dst_matrix[cycle[j]][0][candidats[i]][0]
+                new_edge_2 = self.dst_matrix[candidats[i]][0][cycle[j+1]][0]
+                tmp_regret.append(new_edge_1+new_edge_2-old_edge)
+            tmp_regret.sort()
+            candidat_regret.append([tmp_regret[1]-tmp_regret[0],candidats[i]])
+        candidat_regret.sort(key=lambda x : x[0])
 
-    def regret_2(self):
-        pass
-    def cycle_expansion_regret_2_execute():
-        pass
-    def cycle_expansion_regret_2(self,dst_matrix):
-        pass
+        
+        return candidat_regret[-1][1]
+        
+
+
+    def regret_2(self,nearest,cycle,cluster,cycle_dst):
+        candidats = []
+        for i in range(len(nearest)):
+            nearest[i][1] = nearest[i][1] - cycle_dst[i]
+        for i in nearest:
+            if i[0] not in candidats:
+                candidats.append(i[0])
+        # print(candidats)
+        if len(candidats)>1:
+            best = self.find_second(candidats,cycle,cluster,cycle_dst,nearest)
+        else:
+            best = candidats[0]
+        mini_nearest = float('inf')
+        index = 0
+        for i in range(nearest):
+            if nearest[i][0]== best and nearest[i][1]<mini_nearest:
+                mini_nearest=nearest[i][1]
+                index = i
+        return index
+
+    def cycle_expansion_regret_2_execute(self,cycle,cluster):
+
+        while len(cycle) < len(cluster):
+            nearest = []
+            cycle_dst = self.count_new_dist(cycle)
+            for i in range(-1,len(cycle)-1):
+                nearest.append(self.best_new(cycle,cycle[i],cycle[i+1],self.dst_matrix_sorted[cycle[i]],self.dst_matrix_sorted[cycle[i+1]],cluster))
+            index = self.regret_2(nearest,cycle,cluster,cycle_dst)
+            cycle.insert(index,nearest[index][0])
+            
+        return cycle
+
+    def cycle_expansion_regret_2(self):
+        length =  len(self.dst_matrix_sorted[0])
+        size_of_cycle = length//2
+        first_cycle = [random.randint(0, length-1)]
+        second_cycle = [self.dst_matrix_sorted[first_cycle[0]][-1][1]]
+        cluster1, cluster2 = self.group_nodes(first_cycle[0],second_cycle[0])
+        # first node is the nearest one
+        first_index, _ = self.min_index_value(first_cycle,self.dst_matrix_sorted[first_cycle[0]],cluster1)
+        second_index, _ = self.min_index_value(second_cycle,self.dst_matrix_sorted[second_cycle[0]],cluster2)
+
+        first_cycle.append(first_index)
+        second_cycle.append(second_index)
+        # divide nodes in two clusters
+        
+        first_cycle = self.cycle_expansion_regret_2_execute(first_cycle,cluster1)
+        second_cycle = self.cycle_expansion_regret_2_execute(second_cycle,cluster2)
+        self.save_fig([first_cycle, second_cycle])
+        return [first_cycle, second_cycle]
 
     def draw_lines(self,indexes):
         if indexes:
@@ -198,8 +260,8 @@ class TSP:
 solver = TSP(KROA100_FILENAME)
 dst_array_cycle = []
 min_len = float('inf')
-for i in range(100):
-    indexes = solver.cycle_expansion()
+for i in range(1):
+    indexes = solver.cycle_expansion_regret_2()
     cycle_length=sum(solver.count_new_dist(indexes[0]))+sum(solver.count_new_dist(indexes[1]))
     if cycle_length < min_len:
         solver.save_fig(indexes,'cycle_expansion')
@@ -209,7 +271,7 @@ for i in range(100):
 # print(sum(dst_array_cycle)/len(dst_array_cycle),min(dst_array_cycle),max(dst_array_cycle))
 dst_array_nn = []
 min_len =float('inf')
-for i in range(100):
+for i in range(0):
     indexes = solver.nearest_neighbour()
     cycle_length=sum(solver.count_new_dist(indexes[0]))+sum(solver.count_new_dist(indexes[1]))
     if cycle_length < min_len:
@@ -217,6 +279,6 @@ for i in range(100):
         min_len = cycle_length
     dst_array_nn.append(cycle_length)
 
-print(sum(dst_array_nn)/len(dst_array_nn),min(dst_array_nn),max(dst_array_nn))
-solver.save_statistic([dst_array_nn,dst_array_cycle])
+# print(sum(dst_array_nn)/len(dst_array_nn),min(dst_array_nn),max(dst_array_nn))
+# solver.save_statistic([dst_array_nn,dst_array_cycle])
 # print(solver.group_nodes(1,2))
