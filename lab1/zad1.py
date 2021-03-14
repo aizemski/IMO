@@ -1,4 +1,5 @@
 import numpy as np
+import csv
 import random
 import matplotlib.pyplot as plt
 
@@ -30,7 +31,6 @@ class TSP:
 
         return nodelist
 
-
     def count_dist(self,v, u):
         return np.sqrt(((v[0] - u[0]) ** 2)+((v[1] - u[1]) ** 2))
 
@@ -47,20 +47,30 @@ class TSP:
             dst_matrix_sorted[i].sort()
         return dst_matrix_sorted ,dst_matrix
 
+    def group_nodes(self,first,second):
+        dst = []
+        for node in range(len(self.dst_matrix_sorted[0])):
+            if node != first and node != second:
+                dst1 = self.dst_matrix[node][0][first][0]
+                dst2 = self.dst_matrix[node][0][second][0]
+                dst.append((node,dst1/dst2))
+        dst.sort(key=lambda x: x[1])
 
-    def min_index_value(self,indexes , node_neighbors):
-        index = 0
-        while node_neighbors[index][1] in indexes:
+        return [first]+[p[0] for p in dst[:round(len(dst)/2)]], [second]+[p[0] for p in dst[round(len(dst)/2):]]
+        
+    def min_index_value(self,indexes, node_neighbors,cluster):
+        index = 1 
+        while node_neighbors[index][1] in indexes or node_neighbors[index][1] not in cluster:
             index +=1
         return node_neighbors[index][1] , node_neighbors[index][0]
 
-    def nearest_neighbour_execute(self,cycle,size_of_cycle,second_cycle):
-        if len(cycle) < size_of_cycle:
+    def nearest_neighbour_execute(self,cycle,cluster):
+        while len(cycle) < len(cluster):
             # check on which end is closer node
             index_list =[]
             index_value_list=[]
             for i in cycle:
-                index, index_value = self.min_index_value(cycle+second_cycle,self.dst_matrix_sorted[i])
+                index, index_value = self.min_index_value(cycle,self.dst_matrix_sorted[i],cluster)
                 index_list.append(index)
                 index_value_list.append(index_value)
             min_val = min(index_value_list)
@@ -70,28 +80,30 @@ class TSP:
                     break
         return cycle
 
-    def nearest_neighbour(self,dst_matrix):
+    def nearest_neighbour(self):
         # start from first node
-        length =  len(dst_matrix[0])
+        length =  len(self.dst_matrix_sorted[0])
         size_of_cycle = length//2
         first_cycle = [random.randint(0, length-1)]
         # farest node to first_cycle first node
         second_cycle = [self.dst_matrix_sorted[first_cycle[0]][-1][1]] 
-      
-        while len(second_cycle)+len(first_cycle)<length:
-            first_cycle = self.nearest_neighbour_execute(first_cycle,size_of_cycle,second_cycle)
-            second_cycle = self.nearest_neighbour_execute(second_cycle,length-size_of_cycle,first_cycle)     
+        #divide nodes in two clusters
+        cluster1, cluster2 = self.group_nodes(first_cycle[0],second_cycle[0])
+        
+        first_cycle = self.nearest_neighbour_execute(first_cycle,cluster1)
+        second_cycle = self.nearest_neighbour_execute(second_cycle,cluster2)     
+        # self.save_fig([first_cycle,second_cycle])
         return [first_cycle , second_cycle]
 
-    def best_new(self,cycle,first,second,first_neighbours,second_neighbours):
+    def best_new(self,cycle,first,second,first_neighbours,second_neighbours,cluster):
         new = 0
         while new in cycle:
             new+=1
         new_dst = first_neighbours[-1][0]+second_neighbours[-1][0]
         for i in range(len(first_neighbours)):
-            if first_neighbours[i][1] not in cycle:
+            if first_neighbours[i][1] not in cycle and first_neighbours[i][1] in cluster:
                 for j in range(len(first_neighbours)):
-                    if second_neighbours[j][1] not in cycle and first_neighbours[i][1] + second_neighbours[j][1]<new_dst:
+                    if second_neighbours[j][1] not in cycle and second_neighbours[j][1] in cluster and first_neighbours[i][1] + second_neighbours[j][1]<new_dst:
                         if first_neighbours[i][1] == second_neighbours[j][1]:
                             new = first_neighbours[i][1]
                             new_dst = first_neighbours[i][1] + second_neighbours[j][1]
@@ -110,58 +122,49 @@ class TSP:
 
     def count_new_dist(self,cycle):
         new_dst = []
-        # print(cycle)
         for i in range(-1,len(cycle)-1):
 
-            new_dst.append(self.dst_matrix[cycle[i]][0][cycle[i+1]][0])
+            new_dst.append(self.dst_matrix[ cycle[i] ][0][ cycle[i+1] ][0])
         return new_dst
 
-    def cycle_expansion_execute(self,cycle,cycle_dst,size_of_cycle,dst_matrix,second_cycle):
-        while len(cycle) < size_of_cycle:
+    def cycle_expansion_execute(self,cycle,cluster):
+        while len(cycle) < len(cluster):
             nearest = []
+            cycle_dst = self.count_new_dist(cycle)
             for i in range(-1,len(cycle)-1):
-                nearest.append(self.best_new(second_cycle+cycle,cycle[i],cycle[i+1],dst_matrix[cycle[i]],dst_matrix[cycle[i+1]]))
+                nearest.append(self.best_new(cycle,cycle[i],cycle[i+1],self.dst_matrix_sorted[cycle[i]],self.dst_matrix_sorted[cycle[i+1]],cluster))
             #find lowest cost
             # print(nearest,cycle_dst)
-            
             index = self.lowest_cost(nearest,cycle_dst)
-
             cycle.insert(index,nearest[index][0])
-            cycle_dst = self.count_new_dist(cycle)
-            # print(cycle_dst)
-            # if len(cycle)>2:
-            #     display(nodes,[cycle,[]])
+            
+      
         return cycle
 
-    def cycle_expansion(self,dst_matrix):
-        length =  len(dst_matrix[0])
+    def cycle_expansion(self):
+        length =  len(self.dst_matrix_sorted[0])
         size_of_cycle = length//2
-        first_cycle = [0]#[random.randint(0, length-1)]
-        first_cycle_dst =[]
+        first_cycle = [random.randint(0, length-1)]
+        second_cycle = [self.dst_matrix_sorted[first_cycle[0]][-1][1]]
+        cluster1, cluster2 = self.group_nodes(first_cycle[0],second_cycle[0])
         # first node is the nearest one
-        first_index, first_index_value = self.min_index_value(first_cycle,dst_matrix[first_cycle[0]])
-        first_cycle.append(first_index)
-        first_cycle_dst.append(first_index_value)
-        first_cycle_dst.append(first_index_value)
+        first_index, _ = self.min_index_value(first_cycle,self.dst_matrix_sorted[first_cycle[0]],cluster1)
+        second_index, _ = self.min_index_value(second_cycle,self.dst_matrix_sorted[second_cycle[0]],cluster2)
 
-        first_cycle = self.cycle_expansion_execute(first_cycle,first_cycle_dst,size_of_cycle,dst_matrix,[])
-        return
-        second_cycle = [0]
-        # looking for first node outside of first cycle
-        while second_cycle[0] in first_cycle:
-            second_cycle[0]+=1
-        size_of_second_cycle = length - size_of_cycle
-        second_cycle_dst =[]
-        # second node is the nearest one
-        second_index, second_index_value = self.min_index_value(second_cycle,dst_matrix[second_cycle[0]])
+        first_cycle.append(first_index)
         second_cycle.append(second_index)
-        second_cycle_dst.append(second_index_value)
-        second_cycle = self.cycle_expansion_execute(second_cycle,second_cycle_dst,size_of_second_cycle,dst_matrix,first_cycle)
+        # divide nodes in two clusters
+        
+        
+        first_cycle = self.cycle_expansion_execute(first_cycle,cluster1)
+        second_cycle = self.cycle_expansion_execute(second_cycle,cluster2)
+        # self.save_fig([first_cycle, second_cycle])
         return [first_cycle, second_cycle]
 
     def regret_2(self):
         pass
-
+    def cycle_expansion_regret_2_execute():
+        pass
     def cycle_expansion_regret_2(self,dst_matrix):
         pass
 
@@ -178,21 +181,42 @@ class TSP:
             plt.plot(x_cords,y_cords) 
             # plt.savefig(str(len(indexes))+str(indexes))
 
-    def display(self, indexes):
+    def save_fig(self, indexes,filename='a'):
         nodess = np.array(self.nodes)
         plt.scatter(nodess[:,0],nodess[:,1])
         self.draw_lines(indexes[0])
         self.draw_lines(indexes[1])
-        plt.show()
+        plt.savefig(filename+'.pdf')
+        plt.close()
         # pass
-
+    
+    def save_statistic(self,data):
+        with open("result.csv","w+") as my_csv:
+            csvWriter = csv.writer(my_csv,delimiter=',')
+            csvWriter.writerows(data)
 
 solver = TSP(KROA100_FILENAME)
-indexes = solver.nearest_neighbour(solver.dst_matrix_sorted)
-print(sum(solver.count_new_dist(indexes[0])),sum(solver.count_new_dist(indexes[1])))
-solver.display(indexes)
-# solver.display(indexes)
-# for i in range(1):
-#     indexes = nearest_neighbour(dst_matrix_sorted)
-#     # indexes = cycle_expansion(dst_matrix_sorted)
-#     display(nodes, indexes)
+dst_array_cycle = []
+min_len = float('inf')
+for i in range(100):
+    indexes = solver.cycle_expansion()
+    cycle_length=sum(solver.count_new_dist(indexes[0]))+sum(solver.count_new_dist(indexes[1]))
+    if cycle_length < min_len:
+        solver.save_fig(indexes,'cycle_expansion')
+        min_len = cycle_length
+    dst_array_cycle.append(cycle_length)
+
+# print(sum(dst_array_cycle)/len(dst_array_cycle),min(dst_array_cycle),max(dst_array_cycle))
+dst_array_nn = []
+min_len =float('inf')
+for i in range(100):
+    indexes = solver.nearest_neighbour()
+    cycle_length=sum(solver.count_new_dist(indexes[0]))+sum(solver.count_new_dist(indexes[1]))
+    if cycle_length < min_len:
+        solver.save_fig(indexes,'nearest_neighbour')
+        min_len = cycle_length
+    dst_array_nn.append(cycle_length)
+
+print(sum(dst_array_nn)/len(dst_array_nn),min(dst_array_nn),max(dst_array_nn))
+solver.save_statistic([dst_array_nn,dst_array_cycle])
+# print(solver.group_nodes(1,2))
