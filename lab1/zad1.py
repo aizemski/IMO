@@ -45,7 +45,12 @@ class TSP:
             dst_matrix[i].append(dst_matrix_sorted[i].copy())
             dst_matrix_sorted[i].sort()
         return dst_matrix_sorted ,dst_matrix
-
+    def rest_nodes(self, cycle):
+        nodes =[]
+        for i in range(len(self.nodes)):
+            if i not in cycle:
+                nodes.append(i)
+        return nodes
     def group_nodes(self,first,second):
         dst = []
         for node in range(len(self.dst_matrix_sorted[0])):
@@ -59,12 +64,13 @@ class TSP:
         
     def min_index_value(self,indexes, node_neighbors,cluster):
         index = 1 
+        # print(cluster)
         while node_neighbors[index][1] in indexes or node_neighbors[index][1] not in cluster:
             index +=1
         return node_neighbors[index][1] , node_neighbors[index][0]
 
-    def nearest_neighbour_execute(self,cycle,cluster):
-        while len(cycle) < len(cluster):
+    def nearest_neighbour_execute(self,cycle,cluster,size):
+        while len(cycle) < size:
             # check on which end is closer node
             index_list =[]
             index_value_list=[]
@@ -82,18 +88,15 @@ class TSP:
     def nearest_neighbour(self):
         # start from first node
         length =  len(self.dst_matrix_sorted[0])
-        size_of_cycle = length//2
+        size = length//2
         first_cycle = [random.randint(0, length-1)]
         # farest node to first_cycle first node
         second_cycle = [self.dst_matrix_sorted[first_cycle[0]][-1][1]] 
-        #divide nodes in two clusters
-        cluster1, cluster2 = self.group_nodes(first_cycle[0],second_cycle[0])
-        
-        first_cycle = self.nearest_neighbour_execute(first_cycle,cluster1)
-        second_cycle = self.nearest_neighbour_execute(second_cycle,cluster2)     
-        # self.save_fig([first_cycle,second_cycle])
-        return [first_cycle , second_cycle]
 
+        
+        first_cycle = self.nearest_neighbour_execute(first_cycle,self.rest_nodes(second_cycle),size)
+        second_cycle = self.nearest_neighbour_execute(second_cycle,self.rest_nodes(first_cycle),length-size)     
+        return [first_cycle , second_cycle]
 
     def lowest_cost(self,cycle,cluster):
         candidat_lowest = []
@@ -109,7 +112,6 @@ class TSP:
                 candidat_lowest.append([tmp_lowest[0][0],tmp_lowest[0][1],cluster[i]])
                 
         candidat_lowest.sort(key=lambda x : x[0])
-        # print(candidat_lowest)
         return candidat_lowest[0][1], candidat_lowest[0][2]
 
     def count_new_dist(self,cycle):
@@ -119,8 +121,8 @@ class TSP:
             new_dst.append(self.dst_matrix[ cycle[i] ][0][ cycle[i+1] ][0])
         return new_dst
 
-    def cycle_expansion_execute(self,cycle,cluster):
-        while len(cycle) < len(cluster):
+    def cycle_expansion_execute(self,cycle,cluster,size):
+        while len(cycle) < size:
             
 
             index, point = self.lowest_cost(cycle,cluster)
@@ -131,22 +133,19 @@ class TSP:
 
     def cycle_expansion(self):
         length =  len(self.dst_matrix_sorted[0])
-        size_of_cycle = length//2
+        size = length//2
         first_cycle = [random.randint(0, length-1)]
         second_cycle = [self.dst_matrix_sorted[first_cycle[0]][-1][1]]
-        cluster1, cluster2 = self.group_nodes(first_cycle[0],second_cycle[0])
         # first node is the nearest one
-        first_index, _ = self.min_index_value(first_cycle,self.dst_matrix_sorted[first_cycle[0]],cluster1)
-        second_index, _ = self.min_index_value(second_cycle,self.dst_matrix_sorted[second_cycle[0]],cluster2)
+        first_index, _ = self.min_index_value(first_cycle,self.dst_matrix_sorted[first_cycle[0]],self.rest_nodes(first_cycle))
+        second_index, _ = self.min_index_value(second_cycle,self.dst_matrix_sorted[second_cycle[0]],self.rest_nodes(second_cycle))
 
         first_cycle.append(first_index)
         second_cycle.append(second_index)
-        # divide nodes in two clusters
+
+        first_cycle = self.cycle_expansion_execute(first_cycle,self.rest_nodes(second_cycle),size)
+        second_cycle = self.cycle_expansion_execute(second_cycle,self.rest_nodes(first_cycle),length-size)
         
-        
-        first_cycle = self.cycle_expansion_execute(first_cycle,cluster1)
-        second_cycle = self.cycle_expansion_execute(second_cycle,cluster2)
-        # self.save_fig([first_cycle, second_cycle])
         return [first_cycle, second_cycle]
     
     def regret_2(self,cycle,cluster):
@@ -164,9 +163,9 @@ class TSP:
         candidat_regret.sort(key=lambda x : x[0])
         return candidat_regret[-1][1], candidat_regret[-1][2]
         
-    def cycle_expansion_regret_2_execute(self,cycle,cluster):
+    def cycle_expansion_regret_2_execute(self,cycle,cluster,size):
 
-        while len(cycle) < len(cluster):
+        while len(cycle) < size:
           
             index, point = self.regret_2(cycle,cluster)
             cycle.insert(index,point)
@@ -175,21 +174,18 @@ class TSP:
 
     def cycle_expansion_regret_2(self):
         length =  len(self.dst_matrix_sorted[0])
-        size_of_cycle = length//2
+        size = length//2
         first_cycle = [random.randint(0, length-1)]
         second_cycle = [self.dst_matrix_sorted[first_cycle[0]][-1][1]]
-        cluster1, cluster2 = self.group_nodes(first_cycle[0],second_cycle[0])
         # first node is the nearest one
-        first_index, _ = self.min_index_value(first_cycle,self.dst_matrix_sorted[first_cycle[0]],cluster1)
-        second_index, _ = self.min_index_value(second_cycle,self.dst_matrix_sorted[second_cycle[0]],cluster2)
+        first_index, _ = self.min_index_value(first_cycle,self.dst_matrix_sorted[first_cycle[0]],self.rest_nodes(second_cycle))
+        second_index, _ = self.min_index_value(second_cycle,self.dst_matrix_sorted[second_cycle[0]],self.rest_nodes(first_cycle))
 
         first_cycle.append(first_index)
         second_cycle.append(second_index)
-        # divide nodes in two clusters
+        first_cycle = self.cycle_expansion_regret_2_execute(first_cycle,self.rest_nodes(second_cycle),size)
         
-        first_cycle = self.cycle_expansion_regret_2_execute(first_cycle,cluster1)
-        
-        second_cycle = self.cycle_expansion_regret_2_execute(second_cycle,cluster2)
+        second_cycle = self.cycle_expansion_regret_2_execute(second_cycle,self.rest_nodes(first_cycle),length - size)
         return [first_cycle, second_cycle]
 
     def draw_lines(self,indexes):
@@ -214,8 +210,8 @@ class TSP:
     
 
 
-solver = TSP(KROA100_FILENAME)
-# solver = TSP(KROB100_FILENAME)
+# solver = TSP(KROA100_FILENAME)
+solver = TSP(KROB100_FILENAME)
 iterations = 100
 dst_array_cycle = []
 min_len = float('inf')
