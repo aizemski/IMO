@@ -209,41 +209,42 @@ class TSP:
         plt.close()
     
 
+if __name__ =='__main__':
+        # solver = TSP(KROA100_FILENAME)
+    solver = TSP(KROB100_FILENAME)
+    iterations = 100
+    dst_array_cycle = []
+    min_len = float('inf')
+    for i in range(iterations):
+        indexes = solver.cycle_expansion()
+        cycle_length=sum(solver.count_new_dist(indexes[0]))+sum(solver.count_new_dist(indexes[1]))
+        if cycle_length < min_len:
+            solver.save_fig(indexes,'cycle_expansion')
+            min_len = cycle_length
+        dst_array_cycle.append(cycle_length)
 
-# solver = TSP(KROA100_FILENAME)
-solver = TSP(KROB100_FILENAME)
-iterations = 100
-dst_array_cycle = []
-min_len = float('inf')
-for i in range(iterations):
-    indexes = solver.cycle_expansion()
-    cycle_length=sum(solver.count_new_dist(indexes[0]))+sum(solver.count_new_dist(indexes[1]))
-    if cycle_length < min_len:
-        solver.save_fig(indexes,'cycle_expansion')
-        min_len = cycle_length
-    dst_array_cycle.append(cycle_length)
+    print('cycle expansion',sum(dst_array_cycle)/len(dst_array_cycle),min(dst_array_cycle),max(dst_array_cycle))
+    dst_array_nn = []
+    min_len =float('inf')
+    for i in range(iterations):
+        indexes = solver.nearest_neighbour()
+        cycle_length=sum(solver.count_new_dist(indexes[0]))+sum(solver.count_new_dist(indexes[1]))
+        if cycle_length < min_len:
+            solver.save_fig(indexes,'nearest_neighbour')
+            min_len = cycle_length
+        dst_array_nn.append(cycle_length)
 
-print('cycle expansion',sum(dst_array_cycle)/len(dst_array_cycle),min(dst_array_cycle),max(dst_array_cycle))
-dst_array_nn = []
-min_len =float('inf')
-for i in range(iterations):
-    indexes = solver.nearest_neighbour()
-    cycle_length=sum(solver.count_new_dist(indexes[0]))+sum(solver.count_new_dist(indexes[1]))
-    if cycle_length < min_len:
-        solver.save_fig(indexes,'nearest_neighbour')
-        min_len = cycle_length
-    dst_array_nn.append(cycle_length)
+    print('nearest neighbour',sum(dst_array_nn)/len(dst_array_nn),min(dst_array_nn),max(dst_array_nn))
+    dst_array_cycle_r2 = []
+    min_len = float('inf')
+    for i in range(iterations):
+        indexes = solver.cycle_expansion_regret_2()
+        cycle_length=sum(solver.count_new_dist(indexes[0]))+sum(solver.count_new_dist(indexes[1]))
+        if cycle_length < min_len:
+            solver.save_fig(indexes,'cycle_expansion_regret_2')
+            min_len = cycle_length
+        dst_array_cycle_r2.append(cycle_length)
 
-print('nearest neighbour',sum(dst_array_nn)/len(dst_array_nn),min(dst_array_nn),max(dst_array_nn))
-dst_array_cycle_r2 = []
-min_len = float('inf')
-for i in range(iterations):
-    indexes = solver.cycle_expansion_regret_2()
-    cycle_length=sum(solver.count_new_dist(indexes[0]))+sum(solver.count_new_dist(indexes[1]))
-    if cycle_length < min_len:
-        solver.save_fig(indexes,'cycle_expansion_regret_2')
-        min_len = cycle_length
-    dst_array_cycle_r2.append(cycle_length)
+    print('cycle expansion regret 2',sum(dst_array_cycle_r2)/len(dst_array_cycle_r2),min(dst_array_cycle_r2),max(dst_array_cycle_r2))
 
-print('cycle expansion regret 2',sum(dst_array_cycle_r2)/len(dst_array_cycle_r2),min(dst_array_cycle_r2),max(dst_array_cycle_r2))
 
