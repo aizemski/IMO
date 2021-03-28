@@ -238,7 +238,7 @@ class LocalSearch():
                             
                         
                 i+=1
-    def steeper(self):
+    def steepest(self):
         def inner():
             best = 0
             index , index2 = 0,0 
@@ -378,18 +378,18 @@ if False and __name__ =='__main__':
         search = LocalSearch(indexs,solver.nodes,solver.dst_matrix,solver.dst_matrix_sorted,solver)
     
         start = time.time()
-        search.steeper()
+        search.steepest()
         end = time.time()
     
         cycle_length=sum(solver.count_new_dist(search.first))+sum(solver.count_new_dist(search.second))
         if cycle_length < min_len:
-            solver.save_fig([search.first,search.second],'cycle_expansion_steeper'+name)
+            solver.save_fig([search.first,search.second],'cycle_expansion_steepest'+name)
             min_len = cycle_length
 
         time_array.append(end - start)
         dst_array_cycle.append(cycle_length)
-    print('cycle expansion steeper '+name,sum(dst_array_cycle)/len(dst_array_cycle),min(dst_array_cycle),max(dst_array_cycle)) 
-    print('cycle expansion steeper time '+name,sum(time_array)/len(time_array),min(time_array),max(time_array)) 
+    print('cycle expansion steepest '+name,sum(dst_array_cycle)/len(dst_array_cycle),min(dst_array_cycle),max(dst_array_cycle)) 
+    print('cycle expansion steepest time '+name,sum(time_array)/len(time_array),min(time_array),max(time_array)) 
     
     # random sol
     dst_array_cycle = []
@@ -421,16 +421,16 @@ if False and __name__ =='__main__':
         search = LocalSearch(indexs,solver.nodes,solver.dst_matrix,solver.dst_matrix_sorted,solver)
     
         start = time.time()
-        search.steeper()
+        search.steepest()
         end = time.time()
     
         cycle_length=sum(solver.count_new_dist(search.first))+sum(solver.count_new_dist(search.second))
         if cycle_length < min_len:
-            solver.save_fig([search.first,search.second],'random_steeper_'+name)
+            solver.save_fig([search.first,search.second],'random_steepest_'+name)
             min_len = cycle_length
     
         time_array.append(end - start)
         dst_array_cycle.append(cycle_length)
-    print('random steeper '+name,sum(dst_array_cycle)/len(dst_array_cycle),min(dst_array_cycle),max(dst_array_cycle)) 
-    print('random steeper time '+name,sum(time_array)/len(time_array),min(time_array),max(time_array))
+    print('random steepest '+name,sum(dst_array_cycle)/len(dst_array_cycle),min(dst_array_cycle),max(dst_array_cycle)) 
+    print('random steepest time '+name,sum(time_array)/len(time_array),min(time_array),max(time_array))
     
