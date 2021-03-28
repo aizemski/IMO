@@ -211,8 +211,8 @@ class LocalSearch():
         while flag:
             flag = False
             while i < length2 :
-                k,l = 0,0
-                while k < length2 or l<length2:
+                k,l,m = 0,0
+                while k < length2 or l<length2 or m < length2:
                     # between cycles
                     if  l<length2 and random.randint(0, 1):
                         if outer(order1[i],order2[l]):
@@ -220,21 +220,23 @@ class LocalSearch():
                             self.first[order1[i]],self.second[order2[l]] = self.second[order2[l]],self.first[order1[i]]
                             
                         l+=1
-                    elif k < length2:
+                    else :
                         # first cycle
-                        if random.randint(0, 1):
+                        if k < length2 and random.randint(0, 1):
                             if inner(order1[i],order1[k],1):
                                 flag = True
                                 self.first[order1[i]],self.first[order1[k]] = self.first[order1[k]],self.first[order1[i]]
+                                k+=1
                               
                         # second cycle
-                        else: 
-                            if inner(order2[i],order2[k],1):
+                        elif m<length2: 
+                            if inner(order2[i],order2[l],1):
                                 flag = True
-                                self.second[order2[i]],self.second[order2[k]] = self.second[order2[k]],self.second[order2[i]]
+                                self.second[order2[i]],self.second[order2[l]] = self.second[order2[l]],self.second[order2[i]]
+                                l+=1
                                 
                             
-                        k+=1
+                        
                 i+=1
     def steeper(self):
         def inner():
@@ -302,10 +304,45 @@ class LocalSearch():
         
     def random(self):
         strat = time.time()
-        # while time.time() < 
-        
+        length1 = len(self.first)-1
+        length2 = len(self.second)-1
+        while time.time() < start+1.9:
+            choice = random.randint(0,2)
+            if choice == 0:
+                i = random.randint(0,length1)
+                j = random.randint(0,length1)
+                self.first[i],self.first[j] = self.first[j],self.first[i]
+            elif choice ==1:
+                i = random.randint(0,length2)
+                j = random.randint(0,length2)
+                self.second[i],self.second[j] = self.second[j],self.second[i]
+            else:
+                i = random.randint(0,length1)
+                j = random.randint(0,length2)
+                self.first[i],self.second[j] = self.second[j],self.first[i]
 
-if __name__ =='__main__':
+name = KROA100_FILENAME
+# name = KROB100_FILENAME
+solver = TSP(name)
+
+iterations = 100
+
+dst_array_cycle = []
+time_array=[]
+min_len = float('inf')
+for i in range(iterations):
+    indexs = solver.get_random_sol()
+    search = LocalSearch(indexs,solver.nodes,solver.dst_matrix,solver.dst_matrix_sorted,solver)
+
+    start = time.time()
+    search.random()
+    end = time.time()  
+    cycle_length=sum(solver.count_new_dist(search.first))+sum(solver.count_new_dist(search.second))
+    if cycle_length < min_len:
+        solver.save_fig([search.first,search.second],'random_sol_random_'+name)
+        min_len = cycle_length
+print(min_len)
+if False and __name__ =='__main__':
     # name = KROB100_FILENAME
     name = KROA100_FILENAME
     solver = TSP(name)
