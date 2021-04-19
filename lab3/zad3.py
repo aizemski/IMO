@@ -48,12 +48,7 @@ class TSP:
             dst_matrix_sorted[i].sort()
         return dst_matrix_sorted ,dst_matrix
 
-    # def rest_nodes(self, cycle):
-    #     nodes =[]
-    #     for i in range(len(self.nodes)):
-    #         if i not in cycle:
-    #             nodes.append(i)
-    #     return nodes
+
     
     def group_nodes(self,first,second):
         dst = []
@@ -108,12 +103,7 @@ class TSP:
         size = length//2
         first_cycle = [first[0]]
         second_cycle = [second[0]]
-        # first node is the nearest one
-        # first_index, _ = self.min_index_value(first_cycle,self.dst_matrix_sorted[first_cycle[0]],self.rest_nodes(first_cycle))
-        # second_index, _ = self.min_index_value(second_cycle,self.dst_matrix_sorted[second_cycle[0]],self.rest_nodes(second_cycle))
-
-        # first_cycle.append(first_index)
-        # second_cycle.append(second_index)
+       
 
         first_cycle = self.cycle_expansion_execute(first_cycle,first,size)
         second_cycle = self.cycle_expansion_execute(second_cycle,second,length-size)
@@ -155,11 +145,13 @@ class LocalSearch():
         self.solver = solver
         self.candidats = []
     def count_candidats(self):
+        size = 20
         for i in range(len(self.nodes)):
             self.candidats.append([])
-            for j in range(10):
-                self.candidats[i].append(self.dst_matrix_sorted[i][1:11][j][1])
+            for j in range(size):
                 
+                
+                self.candidats[i].append(self.dst_matrix_sorted[i][1:size+1][j][1])
 
     def count_dst(self, x ,s1 ,s2):
         
@@ -198,6 +190,7 @@ class LocalSearch():
                 
                 self.first[begin+(end-i)] = tmp[i]
         else:
+            
             tmp = self.second.copy()
             for i in range(end-1,begin,-1):
                 self.second[begin+(end-i)] = tmp[i]
@@ -381,7 +374,7 @@ class LocalSearch():
             if types == 1:
                 length = len (self.second)
                 for i in [self.second.index(x),self.second.index(y)]:
-                    # print(i)
+                    
                     for j in range(length):
                         if abs(j-i)>4:
                             current = self.count_change_edge(self.second[i],self.second[(i+1)%length],self.second[j],self.second[(j-1)%length])
@@ -397,14 +390,12 @@ class LocalSearch():
                             else:
                                 moves.append((current,self.second[j],self.first[i]))
             if types ==2:
-                # print(self.first)
-                # print(x)
-                # print(y)
+               
                 try:
                     i = self.first.index(x)
                     length = len (self.second)
                     for j in range(length):
-                        # if check_if_is_not_in_moves(moves,self.first[i],self.second[j]):
+                        
                         current = self.count_change(self.first[i],self.first[i-1],self.first[(i+1)%length],self.second[j],self.second[j-1],self.second[(j+1)%length])
                         if current <0:
                             if self.first[i] < self.second[j]:
@@ -426,7 +417,7 @@ class LocalSearch():
                     j = self.second.index(y)
                     length = len (self.first)
                     for i in range(length):
-                        # if check_if_is_not_in_moves(moves,self.first[i],self.second[j]):
+                        
                         current = self.count_change(self.first[i],self.first[i-1],self.first[(i+1)%length],self.second[j],self.second[j-1],self.second[(j+1)%length])
                         if current <0:
                             if self.first[i] < self.second[j]:
@@ -446,7 +437,7 @@ class LocalSearch():
 
         def update_moves(moves,x,y,types=0):
             k = 0
-            # print(x)
+            
             
             moves = count_new_values(moves,x,y,types)
             
@@ -459,8 +450,7 @@ class LocalSearch():
                 else:
                     
                     moves.pop(k)
-                # else:
-                #     k+=1
+               
             
             return moves
         
@@ -476,16 +466,17 @@ class LocalSearch():
         while len(moves):
             
             if moves[0][1] in self.first and moves[0][2] in self.first :
-                # first first
+              
                 i = self.first.index(moves[0][1])
                 j = self.first.index(moves[0][2])
                 x1=self.first[(i+1)%len(self.first)]
                 x2=self.first[(j+1)%len(self.first)]
                 
                 self.revers(min(i,j),max(i,j),1)
-                # moves = update_moves(moves,moves[0][1],moves[0][2],types=0)
+                
                 moves = update_moves(moves,moves[0][1],moves[0][2],types=0)
-                # moves = update_moves(update_moves(moves,moves[0][1],x1,types=0),moves[0][2],x2,types=0)
+                moves = update_moves(moves,x1,x2,types=0)
+                
             
             elif moves[0][1] in self.second and moves[0][2] in self.second:
                 i = self.second.index(moves[0][1])
@@ -493,10 +484,11 @@ class LocalSearch():
                 x1=self.second[(i+1)%len(self.second)]
                 x2=self.second[(j+1)%len(self.second)]
                
-                # moves = new_moves(moves,i,(i+1)%len(self.second),i-1,j,(j+1)%len(self.second),j-1,1)
+               
                 self.revers(min(i,j),max(i,j),2)
                 moves = update_moves(moves,moves[0][1],moves[0][2],types=1)
-                # moves = update_moves(update_moves(moves,moves[0][1],moves[0][2],types=1),moves[0][2],x2,types=1)
+                moves = update_moves(moves,x1,x2,types=1)
+                
                 
             else:
                 i =0
@@ -517,7 +509,7 @@ class LocalSearch():
                     y2= self.second[j-1]
                     
                     
-                    # moves = new_moves(moves,i,(i+1)%len(self.first),i-1,j,(j+1)%len(self.second),j-1,2)
+                   
                 else:
                     j = self.second.index(moves[0][1])
                     i = self.first.index(moves[0][2])
@@ -528,148 +520,191 @@ class LocalSearch():
                     y1=self.second[i-1]
                     y2=self.first[j-1]
                     
-                    # moves = new_moves(moves,i,(i+1)%len(self.second),i-1,j,(j+1)%len(self.first),j-1,3)
+                   
                 self.first[i],self.second[j] = self.second[j],self.first[i]
                 moves = update_moves(moves,x,y,types=2)
-                # moves = update_moves(update_moves(update_moves(moves,x,y,types=2),x1,x2,types=2),y1,y2,types=2)
-                
-                #
+                moves = update_moves(moves,x1,x2,types=2)
+                moves = update_moves(moves,y1,y2,types=2)
+             
            
             moves = list(dict.fromkeys(moves))
             
             moves.sort()
             
     def steepest_candidats(self):
-        for i in range(len(self.candidats)):
-            for j in range(len(self.candidats[0])):
-                if i in self.first:
-                    x,y=0,0
-                    x = self.first.index(i)
-                    if self.candidats[i][j] in self.first:
-                    # first first
-                        y = self.first.index(self.candidats[i][j])
-                        
-                    else:
-                        y = self.second.index(self.candidats[i][j])
-                        
-                    # first second
-                else:
-                    x,y=0,0
-                    x = self.second.index(i)
-                    if self.candidats[i][j] in self.first:
-                    # first first
-                        y = self.first.index(self.candidats[i][j])
-                        
-                    else:
-                        y = self.second.index(self.candidats[i][j])
-                    # second second 
-                    
-                    
-                
+        l =0
+        while True:
+            l+=1
+            flag = -1
+            best = 0
+            x_,y_ = 0,0
+            
+            for i in range(len(self.candidats)):
+                for j in range(len(self.candidats[0])):
+                    if   i in self.first:
+                        x,y=0,0
+                        x = self.first.index(i)
+                        if self.candidats[i][j] in self.first:
+                       
+                            y = self.first.index(self.candidats[i][j])
+                            a = min(x,y)
+                            b= max(x,y)
+                            if b-a>4:
+                                current = self.count_change_edge(self.first[a],self.first[(a+1)%len(self.first)],self.first[b],self.first[(b-1)%len(self.first)])
+                                if current < best:
+                                    best = current
+                                    x_,y_ = x,y
+                                    flag=0
+                                    
+                        else:
+                            
+                            y = self.second.index(self.candidats[i][j])
+                            current = self.count_change(self.first[x],self.first[x-1],self.first[(x+1)%len(self.first)],self.second[y],self.second[y-1],self.second[(y+1)%len(self.second)])
+                            if current < best:
+                                best = current
+                                x_,y_ = x,y
+                                flag = 1
 
+                       
+                    else:
+                        x,y=0,0
+                        x = self.second.index(i)
+                        if self.candidats[i][j] in self.second:
+                            
+                            y = self.second.index(self.candidats[i][j])
+                            a = min(x,y)
+                            b= max(x,y)
+                            if b-a>4:
+                                current = self.count_change_edge(self.second[a],self.second[(a+1)%len(self.second)],self.second[b],self.second[(b-1)%len(self.second)])
+                                if current < best:
+                                    best = current
+                                    x_,y_ = x,y
+                                    
+                                    flag=2
+                        else:
+                           
+                                y = self.first.index(self.candidats[i][j])
+                                current = self.count_change(self.first[y],self.first[y-1],self.first[(y+1)%len(self.first)],self.second[x],self.second[x-1],self.second[(x+1)%len(self.second)])
+                                if current < best:
+                                    best = current
+                                    x_,y_ = x,y
+                                    flag=3
+                                   
+           
+            if best==0:
+                break
             
             
+        
+            if flag ==0:
+                self.revers(min(x_,y_),max(x_,y_),1)
             
+          
+            if flag == 1:
+                self.first[x_],self.second[y_] = self.second[y_],self.first[x_]
+            if flag == 2:
+              
+                self.revers(min(x_,y_),max(x_,y_),2)
+               
+            if flag == 3:
+                self.first[y_],self.second[x_] = self.second[x_],self.first[y_]
+            
+           
+
 
 if  __name__ =='__main__':
-    # name = KROB200_FILENAME
-    name = KROA200_FILENAME
+    name = KROB200_FILENAME
+    # name = KROA200_FILENAME
     solver = TSP(name)
 
-    iterations = 1
-    #cycle expansion
-    # dst_array_cycle = []
-    # time_array=[]
+    iterations = 100
+    cycle expansion
+    dst_array_cycle = []
+    time_array=[]
   
     
-    # dst_array_cycle = []
-    # time_array=[]
-    # min_len = float('inf')
-    # for i in range(iterations):
-    #     indexs = solver.get_random_sol()
+    dst_array_cycle = []
+    time_array=[]
+    min_len = float('inf')
+    for i in range(iterations):
+        indexs = solver.get_random_sol()
     
-    #     start = time.time()
-    #     indexs = solver.cycle_expansion(indexs[0],indexs[1])
-    #     end = time.time()
+        start = time.time()
+        indexs = solver.cycle_expansion(indexs[0],indexs[1])
+        end = time.time()
     
-    #     cycle_length=sum(solver.count_new_dist(indexs[0]))+sum(solver.count_new_dist(indexs[1]))
-    #     if cycle_length < min_len:
-    #         solver.save_fig([indexs[0],indexs[1]],'cycle_expansion_'+name)
-    #         min_len = cycle_length
+        cycle_length=sum(solver.count_new_dist(indexs[0]))+sum(solver.count_new_dist(indexs[1]))
+        if cycle_length < min_len:
+            solver.save_fig([indexs[0],indexs[1]],'cycle_expansion_'+name)
+            min_len = cycle_length
 
-    #     time_array.append(end - start)
-    #     dst_array_cycle.append(cycle_length)
-    # print('cycle expansion  '+name,sum(dst_array_cycle)/len(dst_array_cycle),min(dst_array_cycle),max(dst_array_cycle)) 
-    # print('cycle expansion  time '+name,sum(time_array)/len(time_array),min(time_array),max(time_array)) 
+        time_array.append(end - start)
+        dst_array_cycle.append(cycle_length)
+    print('cycle expansion  '+name,sum(dst_array_cycle)/len(dst_array_cycle),min(dst_array_cycle),max(dst_array_cycle)) 
+    print('cycle expansion  time '+name,sum(time_array)/len(time_array),min(time_array),max(time_array)) 
 
-    # dst_array_cycle = []
-    # time_array=[]
-    # min_len = float('inf')
-    # for i in range(iterations):
-    #     indexs = solver.get_random_sol()
-    #     search = LocalSearch(indexs,solver.nodes,solver.dst_matrix,solver.dst_matrix_sorted,solver)
-    
-    #     start = time.time()
-    #     search.steepest()
-    #     end = time.time()
-    
-    #     cycle_length=sum(solver.count_new_dist(search.first))+sum(solver.count_new_dist(search.second))
-    #     if cycle_length < min_len:
-    #         solver.save_fig([search.first,search.second],'random_steepest_'+name)
-    #         min_len = cycle_length
-    
-    #     time_array.append(end - start)
-    #     dst_array_cycle.append(cycle_length)
-    # print('random steepest '+name,sum(dst_array_cycle)/len(dst_array_cycle),min(dst_array_cycle),max(dst_array_cycle)) 
-    # print('random steepest time '+name,sum(time_array)/len(time_array),min(time_array),max(time_array))
-
-    # dst_array_cycle = []
-    # time_array=[]
-    # min_len = float('inf')
-    # for i in range(iterations):
-    #     indexs = solver.get_random_sol()
-    #     search = LocalSearch(indexs,solver.nodes,solver.dst_matrix,solver.dst_matrix_sorted,solver)
-    
-    #     start = time.time()
-    #     search.steepest_list()
-    #     end = time.time()
-    
-    #     cycle_length=sum(solver.count_new_dist(search.first))+sum(solver.count_new_dist(search.second))
-    #     if cycle_length < min_len:
-    #         solver.save_fig([search.first,search.second],'random_steepest_list'+name)
-    #         min_len = cycle_length
-    
-    #     time_array.append(end - start)
-    #     dst_array_cycle.append(cycle_length)
-    # print('random steepest list '+name,sum(dst_array_cycle)/len(dst_array_cycle),min(dst_array_cycle),max(dst_array_cycle)) 
-    # print('random steepest list time '+name,sum(time_array)/len(time_array),min(time_array),max(time_array))
     dst_array_cycle = []
     time_array=[]
     min_len = float('inf')
     for i in range(iterations):
         indexs = solver.get_random_sol()
         search = LocalSearch(indexs,solver.nodes,solver.dst_matrix,solver.dst_matrix_sorted,solver)
+    
+        start = time.time()
+        search.steepest()
+        end = time.time()
+    
+        cycle_length=sum(solver.count_new_dist(search.first))+sum(solver.count_new_dist(search.second))
+        if cycle_length < min_len:
+            solver.save_fig([search.first,search.second],'random_steepest_'+name)
+            min_len = cycle_length
+    
+        time_array.append(end - start)
+        dst_array_cycle.append(cycle_length)
+    print('random steepest '+name,sum(dst_array_cycle)/len(dst_array_cycle),min(dst_array_cycle),max(dst_array_cycle)) 
+    print('random steepest time '+name,sum(time_array)/len(time_array),min(time_array),max(time_array))
+
+    dst_array_cycle = []
+    time_array=[]
+    min_len = float('inf')
+    for i in range(iterations):
+        indexs = solver.get_random_sol()
+        search = LocalSearch(indexs,solver.nodes,solver.dst_matrix,solver.dst_matrix_sorted,solver)
+    
+        start = time.time()
+        search.steepest_list()
+        end = time.time()
+    
+        cycle_length=sum(solver.count_new_dist(search.first))+sum(solver.count_new_dist(search.second))
+        if cycle_length < min_len:
+            solver.save_fig([search.first,search.second],'random_steepest_list'+name)
+            min_len = cycle_length
+    
+        time_array.append(end - start)
+        dst_array_cycle.append(cycle_length)
+    print('random steepest list '+name,sum(dst_array_cycle)/len(dst_array_cycle),min(dst_array_cycle),max(dst_array_cycle)) 
+    print('random steepest list time '+name,sum(time_array)/len(time_array),min(time_array),max(time_array))
+    dst_array_cycle = []
+    time_array=[]
+    min_len = float('inf')
+    for i in range(iterations):
+        indexs = solver.get_random_sol()
+        solver.save_fig([indexs[0],[]],'test'+name)
+        search = LocalSearch(indexs,solver.nodes,solver.dst_matrix,solver.dst_matrix_sorted,solver)
         search.count_candidats()
-    #     start = time.time()
+        start = time.time()
         search.steepest_candidats()
-    #     end = time.time()
+        end = time.time()
     
-    #     cycle_length=sum(solver.count_new_dist(search.first))+sum(solver.count_new_dist(search.second))
-    #     if cycle_length < min_len:
-    #         solver.save_fig([search.first,search.second],'random_steepest_candidats'+name)
-    #         min_len = cycle_length
+        cycle_length=sum(solver.count_new_dist(search.first))+sum(solver.count_new_dist(search.second))
+        if cycle_length < min_len:
+            solver.save_fig([search.first,search.second],'random_steepest_candidats'+name)
+            min_len = cycle_length
     
-    #     time_array.append(end - start)
-    #     dst_array_cycle.append(cycle_length)
-    # print('random steepest candidats '+name,sum(dst_array_cycle)/len(dst_array_cycle),min(dst_array_cycle),max(dst_array_cycle)) 
-    # print('random steepest candidats time '+name,sum(time_array)/len(time_array),min(time_array),max(time_array))
+        time_array.append(end - start)
+        dst_array_cycle.append(cycle_length)
+    print('random steepest candidats '+name,sum(dst_array_cycle)/len(dst_array_cycle),min(dst_array_cycle),max(dst_array_cycle)) 
+    print('random steepest candidats time '+name,sum(time_array)/len(time_array),min(time_array),max(time_array))
     
     
 
-"""
-4 algorytmy na 2 instancjach
-[] algorytm w wersji stromej z mechanizmem poprawy efektywności lista ruchów przynoszących poprawę
-[] algorytm w wersji stromej z mechanizmem poprawy efektywności kandydujące
-[x] algorytm w wersji stromej bez mechanizmów 
-[x] heurystyka konstrukcyjna (rozbudowa cyklu)
-"""
