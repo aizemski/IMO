@@ -153,6 +153,14 @@ class LocalSearch():
         self.dst_matrix_sorted = dst_matrix_sorted
         self.dst_matrix = dst_matrix
         self.solver = solver
+        self.candidats = []
+    def count_candidats(self):
+        for i in range(len(self.nodes)):
+            self.candidats.append([])
+            for j in range(10):
+                self.candidats[i].append(self.dst_matrix_sorted[i][1:11][j][1])
+                
+
     def count_dst(self, x ,s1 ,s2):
         
         return self.dst_matrix[x][0][s1][0] + self.dst_matrix[x][0][s2][0]
@@ -175,7 +183,7 @@ class LocalSearch():
         
         return (new_x+new_y) - (old_x+old_y)  
     def count_dst_edge(self,x,s1):
-        return round(self.dst_matrix[x][0][s1][0])
+        return self.dst_matrix[x][0][s1][0]
 
     def count_change_edge(self,x,xs1,y,ys1):
         old_x = self.count_dst_edge(x,xs1)
@@ -280,18 +288,18 @@ class LocalSearch():
                             moves.append((current,self.first[i],self.first[j]))
                         else:
                             moves.append((current,self.first[j],self.first[i]))
-            # length = len(self.second)
-            # for i in range(length):
-            #     for j in range(i+5,length):
-            #         current = self.count_change_edge(self.second[i],self.second[(i+1)%length],self.second[j],self.second[(j-1)%length])
-            #         if current <0:
-            #             if current<best:
-            #                 best=current
+            length = len(self.second)
+            for i in range(length):
+                for j in range(i+5,length):
+                    current = self.count_change_edge(self.second[i],self.second[(i+1)%length],self.second[j],self.second[(j-1)%length])
+                    if current <0:
+                        if current<best:
+                            best=current
                            
-            #             if self.second[i] < self.second[j]:
-            #                 moves.append((current,self.second[i],self.second[j]))
-            #             else:
-            #                 moves.append((current,self.second[j],self.second[i]))
+                        if self.second[i] < self.second[j]:
+                            moves.append((current,self.second[i],self.second[j]))
+                        else:
+                            moves.append((current,self.second[j],self.second[i]))
             
             return moves
             
@@ -326,11 +334,18 @@ class LocalSearch():
             else:
                 y_cycle =2
                 index_y = self.second.index(y)
-
+            maxi = max(index_x,index_y)
+            mini = min(index_x,index_y)
             if x_cycle==1 and y_cycle ==1:
-                return self.count_change_edge(self.first[index_x],self.first[(index_x+1)%len(self.first)],self.first[index_y],self.first[(index_y-1)%len(self.first)])
+                if (maxi-mini >4):
+                    return self.count_change_edge(self.first[mini],self.first[(mini+1)%len(self.first)],self.first[maxi],self.first[(maxi-1)%len(self.first)])
+                else:
+                    return 1
             elif x_cycle==2 and y_cycle ==2:
-                return self.count_change_edge(self.second[index_x],self.second[(index_x+1)%len(self.second)],self.second[index_y],self.second[(index_y-1)%len(self.second)])
+                if (maxi-mini >4):
+                    return self.count_change_edge(self.second[mini],self.second[(mini+1)%len(self.second)],self.second[maxi],self.second[(maxi-1)%len(self.second)])
+                else:
+                    return 1
             else:
                 if x_cycle == 1:
                     return self.count_change(self.first[index_x],self.first[index_x-1],self.first[(index_x+1)%len(self.first)],self.second[index_y],self.second[index_y-1],self.second[(index_y+1)%len(self.second)])
@@ -344,40 +359,43 @@ class LocalSearch():
         def count_new_values(moves,x,y,types):
         
             if types == 0:
+                a,b=0,0
                 length = len (self.first)
                 for i in [self.first.index(x),self.first.index(y)]:
                     for j in range(length):  
                         if abs(j-i)>4:
-                                current = self.count_change_edge(self.first[i],self.first[(i+1)%length],self.first[j],self.first[(j-1)%length])
-                                if current <0:
-                                    if self.first[i] < self.first[j]:
-                                        moves.append((current,self.first[i],self.first[j]))
-                                    else:
-                                        moves.append((current,self.first[j],self.first[i]))
-                        # current = self.count_change(self.first[i],self.first[i-1],self.first[(i+1)%length],self.second[j],self.second[j-1],self.second[(j+1)%length])
-                        # if current <0:
-                        #     if self.first[i] < self.second[j]:
-                        #         moves.append((current,self.first[i],self.second[j]))
-                        #     else:
-                        #         moves.append((current,self.second[j],self.first[i]))
+                            a = min(i,j)
+                            b = max(i,j)
+                            current = self.count_change_edge(self.first[a],self.first[(a+1)%length],self.first[b],self.first[(b-1)%length])
+                            if current <0:
+                                if self.first[a] < self.first[b]:
+                                    moves.append((current,self.first[a],self.first[b]))
+                                else:
+                                    moves.append((current,self.first[b],self.first[a]))
+                        current = self.count_change(self.first[i],self.first[i-1],self.first[(i+1)%length],self.second[j],self.second[j-1],self.second[(j+1)%length])
+                        if current <0:
+                            if self.first[i] < self.second[j]:
+                                moves.append((current,self.first[i],self.second[j]))
+                            else:
+                                moves.append((current,self.second[j],self.first[i]))
             if types == 1:
                 length = len (self.second)
                 for i in [self.second.index(x),self.second.index(y)]:
                     # print(i)
                     for j in range(length):
                         if abs(j-i)>4:
-                                current = self.count_change_edge(self.second[i],self.second[(i+1)%length],self.second[j],self.second[(j-1)%length])
-                                if current <0:
-                                    if self.second[i] < self.second[j]:
-                                        moves.append((current,self.second[i],self.second[j]))
-                                    else:
-                                        moves.append((current,self.second[j],self.second[i]))
-                            # current = self.count_change(self.first[i],self.first[i-1],self.first[(i+1)%length],self.second[j],self.second[j-1],self.second[(j+1)%length])
-                            # if current <0:
-                            #     if self.first[i] < self.second[j]:
-                            #         moves.append((current,self.first[i],self.second[j]))
-                            #     else:
-                            #         moves.append((current,self.second[j],self.first[i]))
+                            current = self.count_change_edge(self.second[i],self.second[(i+1)%length],self.second[j],self.second[(j-1)%length])
+                            if current <0:
+                                if self.second[i] < self.second[j]:
+                                    moves.append((current,self.second[i],self.second[j]))
+                                else:
+                                    moves.append((current,self.second[j],self.second[i]))
+                        current = self.count_change(self.first[i],self.first[i-1],self.first[(i+1)%length],self.second[j],self.second[j-1],self.second[(j+1)%length])
+                        if current <0:
+                            if self.first[i] < self.second[j]:
+                                moves.append((current,self.first[i],self.second[j]))
+                            else:
+                                moves.append((current,self.second[j],self.first[i]))
             if types ==2:
                 # print(self.first)
                 # print(x)
@@ -393,6 +411,15 @@ class LocalSearch():
                                 moves.append((current,self.first[i],self.second[j]))
                             else:
                                 moves.append((current,self.second[j],self.first[i]))
+                        if abs(j-i)>4:
+                            a = min(i,j)
+                            b = max(i,j)
+                            current = self.count_change_edge(self.first[a],self.first[(a+1)%length],self.first[b],self.first[(b-1)%length])
+                            if current <0:
+                                if self.first[a] < self.first[b]:
+                                    moves.append((current,self.first[a],self.first[b]))
+                                else:
+                                    moves.append((current,self.first[b],self.first[a]))
                 except:
                     pass
                 try:
@@ -406,6 +433,13 @@ class LocalSearch():
                                 moves.append((current,self.first[i],self.second[j]))
                             else:
                                 moves.append((current,self.second[j],self.first[i]))
+                        if abs(j-i)>4:
+                            current = self.count_change_edge(self.second[i],self.second[(i+1)%length],self.second[j],self.second[(j-1)%length])
+                            if current <0:
+                                if self.second[i] < self.second[j]:
+                                    moves.append((current,self.second[i],self.second[j]))
+                                else:
+                                    moves.append((current,self.second[j],self.second[i]))
                 except:
                     pass
             return moves
@@ -413,12 +447,11 @@ class LocalSearch():
         def update_moves(moves,x,y,types=0):
             k = 0
             # print(x)
-          
+            
             moves = count_new_values(moves,x,y,types)
             
             
             while k<len(moves):
-            
                 new_value = count_new_value(moves[k][1],moves[k][2])
                 if new_value<0:
                     moves[k]=(new_value,moves[k][1],moves[k][2])
@@ -435,7 +468,7 @@ class LocalSearch():
 
         inner_moves = inner()
         outer_moves = outer()
-        moves = inner_moves#+outer_moves
+        moves = inner_moves+outer_moves
         moves = list(dict.fromkeys(moves))
         
         moves.sort()
@@ -448,13 +481,13 @@ class LocalSearch():
                 j = self.first.index(moves[0][2])
                 x1=self.first[(i+1)%len(self.first)]
                 x2=self.first[(j+1)%len(self.first)]
-                print('first')
                 
                 self.revers(min(i,j),max(i,j),1)
-                moves = update_moves(update_moves(moves,moves[0][1],moves[0][2],types=0),x1,x2,types=0)
+                # moves = update_moves(moves,moves[0][1],moves[0][2],types=0)
+                moves = update_moves(moves,moves[0][1],moves[0][2],types=0)
+                # moves = update_moves(update_moves(moves,moves[0][1],x1,types=0),moves[0][2],x2,types=0)
             
             elif moves[0][1] in self.second and moves[0][2] in self.second:
-                print('second')
                 i = self.second.index(moves[0][1])
                 j = self.second.index(moves[0][2])
                 x1=self.second[(i+1)%len(self.second)]
@@ -462,7 +495,8 @@ class LocalSearch():
                
                 # moves = new_moves(moves,i,(i+1)%len(self.second),i-1,j,(j+1)%len(self.second),j-1,1)
                 self.revers(min(i,j),max(i,j),2)
-                moves = update_moves(update_moves(moves,moves[0][1],moves[0][2],types=1),x1,x2,types=1)
+                moves = update_moves(moves,moves[0][1],moves[0][2],types=1)
+                # moves = update_moves(update_moves(moves,moves[0][1],moves[0][2],types=1),moves[0][2],x2,types=1)
                 
             else:
                 i =0
@@ -496,17 +530,40 @@ class LocalSearch():
                     
                     # moves = new_moves(moves,i,(i+1)%len(self.second),i-1,j,(j+1)%len(self.first),j-1,3)
                 self.first[i],self.second[j] = self.second[j],self.first[i]
-                
-                moves = update_moves(update_moves(update_moves(moves,x,y,types=2),x1,x2,types=2),y1,y2,types=2)
+                moves = update_moves(moves,x,y,types=2)
+                # moves = update_moves(update_moves(update_moves(moves,x,y,types=2),x1,x2,types=2),y1,y2,types=2)
                 
                 #
+           
             moves = list(dict.fromkeys(moves))
             
             moves.sort()
-            print(len(moves))
             
-            solver.save_fig([self.first,[]],'./tmp/random_steepest_'+name+str(time.time()))
-                
+    def steepest_candidats(self):
+        for i in range(len(self.candidats)):
+            for j in range(len(self.candidats[0])):
+                if i in self.first:
+                    x,y=0,0
+                    x = self.first.index(i)
+                    if self.candidats[i][j] in self.first:
+                    # first first
+                        y = self.first.index(self.candidats[i][j])
+                        
+                    else:
+                        y = self.second.index(self.candidats[i][j])
+                        
+                    # first second
+                else:
+                    x,y=0,0
+                    x = self.second.index(i)
+                    if self.candidats[i][j] in self.first:
+                    # first first
+                        y = self.first.index(self.candidats[i][j])
+                        
+                    else:
+                        y = self.second.index(self.candidats[i][j])
+                    # second second 
+                    
                     
                 
 
@@ -521,52 +578,92 @@ if  __name__ =='__main__':
 
     iterations = 1
     #cycle expansion
-    dst_array_cycle = []
-    time_array=[]
+    # dst_array_cycle = []
+    # time_array=[]
   
     
-    dst_array_cycle = []
-    time_array=[]
-    min_len = float('inf')
-    for i in range(iterations):
-        indexs = solver.get_random_sol()
+    # dst_array_cycle = []
+    # time_array=[]
+    # min_len = float('inf')
+    # for i in range(iterations):
+    #     indexs = solver.get_random_sol()
     
-        start = time.time()
-        indexs = solver.cycle_expansion(indexs[0],indexs[1])
-        end = time.time()
+    #     start = time.time()
+    #     indexs = solver.cycle_expansion(indexs[0],indexs[1])
+    #     end = time.time()
     
-        cycle_length=sum(solver.count_new_dist(indexs[0]))+sum(solver.count_new_dist(indexs[1]))
-        if cycle_length < min_len:
-            solver.save_fig([indexs[0],indexs[1]],'cycle_expansion_'+name)
-            min_len = cycle_length
+    #     cycle_length=sum(solver.count_new_dist(indexs[0]))+sum(solver.count_new_dist(indexs[1]))
+    #     if cycle_length < min_len:
+    #         solver.save_fig([indexs[0],indexs[1]],'cycle_expansion_'+name)
+    #         min_len = cycle_length
 
-        time_array.append(end - start)
-        dst_array_cycle.append(cycle_length)
-    print('cycle expansion  '+name,sum(dst_array_cycle)/len(dst_array_cycle),min(dst_array_cycle),max(dst_array_cycle)) 
-    print('cycle expansion  time '+name,sum(time_array)/len(time_array),min(time_array),max(time_array)) 
+    #     time_array.append(end - start)
+    #     dst_array_cycle.append(cycle_length)
+    # print('cycle expansion  '+name,sum(dst_array_cycle)/len(dst_array_cycle),min(dst_array_cycle),max(dst_array_cycle)) 
+    # print('cycle expansion  time '+name,sum(time_array)/len(time_array),min(time_array),max(time_array)) 
+
+    # dst_array_cycle = []
+    # time_array=[]
+    # min_len = float('inf')
+    # for i in range(iterations):
+    #     indexs = solver.get_random_sol()
+    #     search = LocalSearch(indexs,solver.nodes,solver.dst_matrix,solver.dst_matrix_sorted,solver)
     
+    #     start = time.time()
+    #     search.steepest()
+    #     end = time.time()
     
+    #     cycle_length=sum(solver.count_new_dist(search.first))+sum(solver.count_new_dist(search.second))
+    #     if cycle_length < min_len:
+    #         solver.save_fig([search.first,search.second],'random_steepest_'+name)
+    #         min_len = cycle_length
     
+    #     time_array.append(end - start)
+    #     dst_array_cycle.append(cycle_length)
+    # print('random steepest '+name,sum(dst_array_cycle)/len(dst_array_cycle),min(dst_array_cycle),max(dst_array_cycle)) 
+    # print('random steepest time '+name,sum(time_array)/len(time_array),min(time_array),max(time_array))
+
+    # dst_array_cycle = []
+    # time_array=[]
+    # min_len = float('inf')
+    # for i in range(iterations):
+    #     indexs = solver.get_random_sol()
+    #     search = LocalSearch(indexs,solver.nodes,solver.dst_matrix,solver.dst_matrix_sorted,solver)
+    
+    #     start = time.time()
+    #     search.steepest_list()
+    #     end = time.time()
+    
+    #     cycle_length=sum(solver.count_new_dist(search.first))+sum(solver.count_new_dist(search.second))
+    #     if cycle_length < min_len:
+    #         solver.save_fig([search.first,search.second],'random_steepest_list'+name)
+    #         min_len = cycle_length
+    
+    #     time_array.append(end - start)
+    #     dst_array_cycle.append(cycle_length)
+    # print('random steepest list '+name,sum(dst_array_cycle)/len(dst_array_cycle),min(dst_array_cycle),max(dst_array_cycle)) 
+    # print('random steepest list time '+name,sum(time_array)/len(time_array),min(time_array),max(time_array))
     dst_array_cycle = []
     time_array=[]
     min_len = float('inf')
     for i in range(iterations):
         indexs = solver.get_random_sol()
         search = LocalSearch(indexs,solver.nodes,solver.dst_matrix,solver.dst_matrix_sorted,solver)
+        search.count_candidats()
+    #     start = time.time()
+        search.steepest_candidats()
+    #     end = time.time()
     
-        start = time.time()
-        search.steepest_list()
-        end = time.time()
+    #     cycle_length=sum(solver.count_new_dist(search.first))+sum(solver.count_new_dist(search.second))
+    #     if cycle_length < min_len:
+    #         solver.save_fig([search.first,search.second],'random_steepest_candidats'+name)
+    #         min_len = cycle_length
     
-        cycle_length=sum(solver.count_new_dist(search.first))+sum(solver.count_new_dist(search.second))
-        if cycle_length < min_len:
-            solver.save_fig([search.first,[]],'random_steepest_'+name)
-            min_len = cycle_length
+    #     time_array.append(end - start)
+    #     dst_array_cycle.append(cycle_length)
+    # print('random steepest candidats '+name,sum(dst_array_cycle)/len(dst_array_cycle),min(dst_array_cycle),max(dst_array_cycle)) 
+    # print('random steepest candidats time '+name,sum(time_array)/len(time_array),min(time_array),max(time_array))
     
-        time_array.append(end - start)
-        dst_array_cycle.append(cycle_length)
-    print('random steepest '+name,sum(dst_array_cycle)/len(dst_array_cycle),min(dst_array_cycle),max(dst_array_cycle)) 
-    print('random steepest time '+name,sum(time_array)/len(time_array),min(time_array),max(time_array))
     
 
 """
